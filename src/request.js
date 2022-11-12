@@ -5,14 +5,16 @@
 
 [RFC 8259 8.1](https://www.rfc-editor.org/rfc/rfc8259#section-8.1)
  */
-const assert = require('assert');
-const url = require('url');
+const assert = require('node:assert');
+const url = require('node:url');
 const { parseQuery, parseContentType } = require('./utils');
 
 // ============================================================================
 function receiveRequestDataDecorator(func) {
-  return async function (request, response) {
-    await func(request, response);
+  return async (context) => {
+    await func(context);
+
+    const { request } = context;
 
     // TODO: check content-length
     // TODO: limited receive size
@@ -30,8 +32,10 @@ function receiveRequestDataDecorator(func) {
 }
 
 function setRequestQueryDecorator(func) {
-  return async function (request, response) {
-    await func(request, response);
+  return async (context) => {
+    await func(context);
+
+    const { request } = context;
 
     const { pathname, query } = url.parse(request.url);
     request.path = pathname;
@@ -43,8 +47,10 @@ function setRequestQueryDecorator(func) {
  * > Note: ignore charset
  */
 function setRequestBodyDecorator(func) {
-  return async function (request, response) {
-    await func(request, response);
+  return async (context) => {
+    await func(context);
+
+    const { request } = context;
 
     assert(Buffer.isBuffer(request.data), 'request.data not Buffer');
 

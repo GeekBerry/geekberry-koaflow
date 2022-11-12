@@ -1,4 +1,4 @@
-const assert = require('assert');
+const assert = require('node:assert');
 
 function composeDecorator(...decoratorArray) {
   decoratorArray.forEach((func, index) => {

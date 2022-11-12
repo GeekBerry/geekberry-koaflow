@@ -1,4 +1,4 @@
-const http = require('http');
+const http = require('node:http');
 const composeDecorator = require('./composeDecorator');
 
 const {
@@ -17,31 +17,67 @@ const {
 // ============================================================================
 
 class Application {
-  // ==========================================================================
   constructor() {
-    this.decoratorArray = [];
+    this.middlewareArray = [];
+    this.server = null;
   }
 
-  decorate(...decoratorArray) {
-    this.decoratorArray.unshift(...decoratorArray);
+  use(...middlewareArray) {
+    this.middlewareArray.push(...middlewareArray);
   }
 
   listen(...args) {
-    const requestListener = composeDecorator(
+    if (!this.server) {
+      const requestListener = this._getRequestListener();
+
+      this.server = http.createServer(requestListener);
+      this.server.listen(...args);
+    }
+
+    return this.server;
+  }
+
+  async close() {
+    if (this.server) {
+      await this.server.close();
+      this.server = null;
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  _getRequestListener() {
+    const contextHandle = composeDecorator(
       sendResponseDecorator,
       setResponseDataDecorator,
       autoContentTypeDecorator,
       handleHttpErrorDecorator,
-      ...this.decoratorArray,
+      this._getMiddlewareDecorator(),
+      // TODO: router
       setRequestBodyDecorator,
       setRequestQueryDecorator,
       receiveRequestDataDecorator,
       () => undefined,
     );
 
-    const server = http.createServer(requestListener);
+    return (request, response) => {
+      const context = { request, response };
 
-    return server.listen(...args);
+      return contextHandle(context);
+    };
+  }
+
+  _getMiddlewareDecorator() {
+    const requestHandle = composeDecorator(
+      ...this.middlewareArray,
+      () => undefined,
+    );
+
+    return (func) => {
+      return async (context) => {
+        await func(context);
+        return await requestHandle(context);
+      };
+    };
   }
 }
 
