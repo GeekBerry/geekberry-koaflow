@@ -2,5 +2,10 @@
   "name": "@geekberry/koaflow",
   "version": "0.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.14"
+  }
 }
