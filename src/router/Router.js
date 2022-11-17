@@ -27,16 +27,14 @@ class Router {
     });
   }
 
-  exec(context) {
-    const { request } = context;
-
+  exec(request, ...args) {
     for (const layer of this.layerArray) {
       if (layer.methodSet.has(request.method)) {
         const params = layer.match(request.path);
 
         if (params) {
           request.params = params;
-          return layer.func(context);
+          return layer.func(request, ...args);
         }
       }
     }

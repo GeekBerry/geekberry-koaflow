@@ -11,10 +11,8 @@ const { parseQuery, parseContentType } = require('./utils');
 
 // ============================================================================
 function receiveRequestDataDecorator(func) {
-  return async (context) => {
-    await func(context);
-
-    const { request } = context;
+  return async (request, ...args) => {
+    await func(request, ...args);
 
     // TODO: check content-length
     // TODO: limited receive size
@@ -32,10 +30,8 @@ function receiveRequestDataDecorator(func) {
 }
 
 function setRequestQueryDecorator(func) {
-  return async (context) => {
-    await func(context);
-
-    const { request } = context;
+  return async (request, ...args) => {
+    await func(request, ...args);
 
     const { pathname, query } = url.parse(request.url);
     request.path = pathname;
@@ -47,10 +43,8 @@ function setRequestQueryDecorator(func) {
  * > Note: ignore charset
  */
 function setRequestBodyDecorator(func) {
-  return async (context) => {
-    await func(context);
-
-    const { request } = context;
+  return async (request, ...args) => {
+    await func(request, ...args);
 
     assert(Buffer.isBuffer(request.data), 'request.data not Buffer');
 

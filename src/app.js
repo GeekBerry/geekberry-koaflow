@@ -30,7 +30,17 @@ class Application {
 
   listen(...args) {
     if (!this.server) {
-      const requestListener = this._getRequestListener();
+      const requestListener = composeDecorator(
+        sendResponseDecorator,
+        setResponseDataDecorator,
+        autoContentTypeDecorator,
+        handleHttpErrorDecorator,
+        this._getMiddlewareDecorator(),
+        setRequestBodyDecorator,
+        setRequestQueryDecorator,
+        receiveRequestDataDecorator,
+        () => undefined,
+      );
 
       this.server = http.createServer(requestListener);
       this.server.listen(...args);
@@ -47,37 +57,28 @@ class Application {
   }
 
   // --------------------------------------------------------------------------
-  _getRequestListener() {
-    const contextHandle = composeDecorator(
-      sendResponseDecorator,
-      setResponseDataDecorator,
-      autoContentTypeDecorator,
-      handleHttpErrorDecorator,
-      this._getMiddlewareDecorator(),
-      setRequestBodyDecorator,
-      setRequestQueryDecorator,
-      receiveRequestDataDecorator,
-      () => undefined,
-    );
-
-    return (request, response) => {
-      const context = { request, response };
-
-      return contextHandle(context);
-    };
-  }
-
   _getMiddlewareDecorator() {
     const middlewareHandle = composeDecorator(
       ...this.middlewareArray,
-      (context) => this.router.exec(context),
+      this._getRouterDecorator(),
+      () => undefined,
     );
 
     return (func) => {
-      return async (context) => {
-        await func(context);
+      return async (...args) => {
+        await func(...args);
 
-        return middlewareHandle(context);
+        return middlewareHandle(...args);
+      };
+    };
+  }
+
+  _getRouterDecorator() {
+    return (func) => {
+      return async (...args) => {
+        await func(...args);
+
+        return this.router.exec(...args);
       };
     };
   }
