@@ -1,5 +1,6 @@
 const http = require('node:http');
 const composeDecorator = require('./composeDecorator');
+const Router = require('./router');
 
 const {
   receiveRequestDataDecorator,
@@ -18,6 +19,7 @@ const {
 
 class Application {
   constructor() {
+    this.router = new Router();
     this.middlewareArray = [];
     this.server = null;
   }
@@ -52,7 +54,6 @@ class Application {
       autoContentTypeDecorator,
       handleHttpErrorDecorator,
       this._getMiddlewareDecorator(),
-      // TODO: router
       setRequestBodyDecorator,
       setRequestQueryDecorator,
       receiveRequestDataDecorator,
@@ -67,15 +68,16 @@ class Application {
   }
 
   _getMiddlewareDecorator() {
-    const requestHandle = composeDecorator(
+    const middlewareHandle = composeDecorator(
       ...this.middlewareArray,
-      () => undefined,
+      (context) => this.router.exec(context),
     );
 
     return (func) => {
       return async (context) => {
         await func(context);
-        return await requestHandle(context);
+
+        return middlewareHandle(context);
       };
     };
   }
