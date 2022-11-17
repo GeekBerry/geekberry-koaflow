@@ -1,5 +1,5 @@
 const http = require('node:http');
-const composeDecorator = require('./composeDecorator');
+const { composeDecorator } = require('./utils');
 const Router = require('./router');
 
 const {
@@ -39,7 +39,7 @@ class Application {
         setRequestBodyDecorator,
         setRequestQueryDecorator,
         receiveRequestDataDecorator,
-        () => undefined,
+        (request, response) => undefined,
       );
 
       this.server = http.createServer(requestListener);
@@ -58,27 +58,18 @@ class Application {
 
   // --------------------------------------------------------------------------
   _getMiddlewareDecorator() {
-    const middlewareHandle = composeDecorator(
-      ...this.middlewareArray,
-      this._getRouterDecorator(),
-      () => undefined,
-    );
-
     return (func) => {
-      return async (...args) => {
-        await func(...args);
+      const executor = composeDecorator(
+        ...this.middlewareArray,
+        (context) => this.router.executor(context),
+      );
 
-        return middlewareHandle(...args);
-      };
-    };
-  }
+      return async (request, response) => {
+        await func(request, response); // receive data and parse request
 
-  _getRouterDecorator() {
-    return (func) => {
-      return async (...args) => {
-        await func(...args);
+        const context = { request, response, app: this };
 
-        return this.router.exec(...args);
+        return executor(context);
       };
     };
   }

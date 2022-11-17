@@ -1,7 +1,7 @@
 const assert = require('node:assert');
 const http = require('node:http');
-const RouterLayer = require('./Layer');
-const composeDecorator = require('../composeDecorator');
+const Layer = require('./Layer');
+const { composeDecorator } = require('../utils');
 
 class Router {
   constructor() {
@@ -9,11 +9,14 @@ class Router {
   }
 
   register(path, methods, ...middlewareArray) {
-    // TODO: path to be array
-    const layer = new RouterLayer({
+    // TODO: allowed path to be array
+    const layer = new Layer({
       path,
       methodSet: new Set(methods),
-      func: composeDecorator(...middlewareArray, () => undefined),
+      executor: composeDecorator(
+        ...middlewareArray,
+        (context) => undefined,
+      ),
     });
 
     this.layerArray.push(layer);
@@ -27,14 +30,14 @@ class Router {
     });
   }
 
-  exec(request, ...args) {
+  executor(context) {
     for (const layer of this.layerArray) {
-      if (layer.methodSet.has(request.method)) {
-        const params = layer.match(request.path);
+      if (layer.methodSet.has(context.request.method)) {
+        const params = layer.match(context.request.path);
 
         if (params) {
-          request.params = params;
-          return layer.func(request, ...args);
+          context.request.params = params;
+          return layer.executor(context);
         }
       }
     }

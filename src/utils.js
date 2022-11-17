@@ -3,8 +3,46 @@
 [Content-Type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type)
 [MIME_types](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
  */
-const assert = require('assert');
-const querystring = require('querystring');
+const assert = require('node:assert');
+const querystring = require('node:querystring');
+
+// ----------------------------------------------------------------------------
+
+/**
+ * @param decoratorArray [function]
+ * @return {function}
+
+ * @example
+ ```javascript
+ function inc(func) {
+   return (v) => {
+     return func(v) + 1;
+   };
+ }
+
+ function double(func) {
+   return (v) => {
+     return func(v) * 2;
+   };
+ }
+
+ inc(double(v => v))(5); // => 11
+ composeDecorator(inc, double, v => v)(5); // 11
+ double(inc(v => v))(5); // => 12
+ composeDecorator(double, inc, v => v)(5); // 12
+ ```
+ */
+function composeDecorator(...decoratorArray) {
+  decoratorArray.forEach((func, index) => {
+    assert(typeof func === 'function', `args[${index}] not function`);
+  });
+
+  return decoratorArray
+    .reverse()
+    .reduce((func, decorate) => decorate(func));
+}
+
+// ----------------------------------------------------------------------------
 
 /**
  * TODO: use `require('qs')` to parse
@@ -52,6 +90,7 @@ function parseContentType(string = '') {
 }
 
 module.exports = {
+  composeDecorator,
   parseQuery,
   parseContentType,
 };

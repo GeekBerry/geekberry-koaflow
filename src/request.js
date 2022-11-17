@@ -1,4 +1,9 @@
 /*
+Http Request:
+  method url httpVersion
+  headers
+  data
+
 [rfc7231](https://rfc2cn.com/rfc7231.html)
 [Content-Type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type)
 [MIME_types](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
@@ -11,8 +16,8 @@ const { parseQuery, parseContentType } = require('./utils');
 
 // ============================================================================
 function receiveRequestDataDecorator(func) {
-  return async (request, ...args) => {
-    await func(request, ...args);
+  return async (request, response) => {
+    await func(request, response);
 
     // TODO: check content-length
     // TODO: limited receive size
@@ -30,8 +35,8 @@ function receiveRequestDataDecorator(func) {
 }
 
 function setRequestQueryDecorator(func) {
-  return async (request, ...args) => {
-    await func(request, ...args);
+  return async (request, response) => {
+    await func(request, response);
 
     const { pathname, query } = url.parse(request.url);
     request.path = pathname;
@@ -43,8 +48,8 @@ function setRequestQueryDecorator(func) {
  * > Note: ignore charset
  */
 function setRequestBodyDecorator(func) {
-  return async (request, ...args) => {
-    await func(request, ...args);
+  return async (request, response) => {
+    await func(request, response);
 
     assert(Buffer.isBuffer(request.data), 'request.data not Buffer');
 

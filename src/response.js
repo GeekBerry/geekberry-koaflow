@@ -1,8 +1,8 @@
 /*
-http response:
+Http Response:
   httpVersion statusCode statusMessage
   headers
-  text
+  data
  */
 const assert = require('node:assert');
 const HttpError = require('./HttpError');
@@ -10,9 +10,9 @@ const { parseContentType } = require('./utils');
 
 // ============================================================================
 function handleHttpErrorDecorator(func) {
-  return async (request, response, ...args) => {
+  return async (request, response) => {
     try {
-      response.body = await func(request, response, ...args);
+      response.body = await func(request, response);
     } catch (e) {
       if (e instanceof HttpError) {
         response.statusCode = e.statusCode;
@@ -25,8 +25,8 @@ function handleHttpErrorDecorator(func) {
 }
 
 function autoContentTypeDecorator(func) {
-  return async (request, response, ...args) => {
-    await func(request, response, ...args);
+  return async (request, response) => {
+    await func(request, response);
 
     if (response.hasHeader('content-type')) {
       return;
@@ -47,8 +47,8 @@ function autoContentTypeDecorator(func) {
 }
 
 function setResponseDataDecorator(func) {
-  return async (request, response, ...args) => {
-    await func(request, response, ...args);
+  return async (request, response) => {
+    await func(request, response);
 
     response.contentType = parseContentType(response.getHeader('content-type'));
 
@@ -87,9 +87,9 @@ function setResponseDataDecorator(func) {
  * @return {function}
  */
 function sendResponseDecorator(func) {
-  return async (request, response, ...args) => {
+  return async (request, response) => {
     try {
-      await func(request, response, ...args);
+      await func(request, response);
 
       assert(Buffer.isBuffer(response.data), 'response.data not Buffer');
       response.setHeader('content-length', response.data.length);

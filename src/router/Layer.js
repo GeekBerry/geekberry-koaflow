@@ -1,5 +1,17 @@
 const assert = require('node:assert');
 
+/**
+ * @param path {string}
+ * @return {RegExp}
+ * @example
+ *
+ * > pathToRegex('/user/:userName');
+ /^\/user\/(?<userName>[^/]*)$/i
+
+ * pathToRegex('/api/*');
+ /^\/api\/(.*)$/i
+
+ */
 function pathToRegex(path) {
   const string = path.split('/')
     .map(part => {
@@ -17,16 +29,16 @@ function pathToRegex(path) {
 }
 
 class Layer {
-  constructor({ path, methodSet, func }) {
+  constructor({ path, methodSet, executor }) {
     path = path instanceof RegExp ? path.source : path;
 
     assert(typeof path === 'string', 'path must be string');
     assert(methodSet instanceof Set, 'methodSet must be instanceof Set');
-    assert(typeof func === 'function', 'func must be function');
+    assert(typeof executor === 'function', 'executor must be function');
 
     this.path = path;
     this.methodSet = methodSet;
-    this.func = func;
+    this.executor = executor;
     this.regex = pathToRegex(path);
   }
 
@@ -36,7 +48,7 @@ class Layer {
     return new this.constructor({
       path: `${path}${this.path}`,
       methodSet: this.methodSet,
-      func: this.func,
+      executor: this.executor,
     });
   }
 
