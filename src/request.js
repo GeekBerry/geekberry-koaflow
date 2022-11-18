@@ -51,7 +51,7 @@ function setRequestBodyDecorator(func) {
   return async (request, response) => {
     await func(request, response);
 
-    assert(Buffer.isBuffer(request.data), 'request.data not Buffer');
+    assert(Buffer.isBuffer(request.data), 'request.data must be Buffer');
 
     request.contentType = parseContentType(request.headers['content-type']);
 

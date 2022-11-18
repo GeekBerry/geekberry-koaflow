@@ -1,23 +1,21 @@
 const assert = require('node:assert');
 const http = require('node:http');
 const Layer = require('./Layer');
-const { composeDecorator } = require('../utils');
+const { composeFlow } = require('../utils');
 
 class Router {
   constructor() {
     this.layerArray = [];
   }
 
-  register(path, methods, ...middlewareArray) {
+  register(path, methods, ...flowArray) {
     // TODO: allowed path to be array
-    const layer = new Layer({
-      path,
-      methodSet: new Set(methods),
-      executor: composeDecorator(
-        ...middlewareArray,
-        (context) => undefined,
-      ),
-    });
+
+    const methodSet = new Set(methods);
+
+    const executor = flowArray.length ? composeFlow(...flowArray) : () => undefined;
+
+    const layer = new Layer({ path, methodSet, executor });
 
     this.layerArray.push(layer);
   }
@@ -46,40 +44,40 @@ class Router {
   }
 
   // -------------------------- common http method ----------------------------
-  all(path, ...middlewareArray) {
-    this.register(path, http.METHODS, ...middlewareArray);
+  all(path, ...flowArray) {
+    this.register(path, http.METHODS, ...flowArray);
   }
 
-  head(path, ...middlewareArray) {
-    this.register(path, ['HEAD'], ...middlewareArray);
+  head(path, ...flowArray) {
+    this.register(path, ['HEAD'], ...flowArray);
   }
 
-  options(path, ...middlewareArray) {
-    this.register(path, ['OPTIONS'], ...middlewareArray);
+  options(path, ...flowArray) {
+    this.register(path, ['OPTIONS'], ...flowArray);
   }
 
-  get(path, ...middlewareArray) {
-    this.register(path, ['GET'], ...middlewareArray);
+  get(path, ...flowArray) {
+    this.register(path, ['GET'], ...flowArray);
   }
 
-  query(path, ...middlewareArray) {
-    this.register(path, ['QUERY'], ...middlewareArray);
+  query(path, ...flowArray) {
+    this.register(path, ['QUERY'], ...flowArray);
   }
 
-  put(path, ...middlewareArray) {
-    this.register(path, ['PUT'], ...middlewareArray);
+  put(path, ...flowArray) {
+    this.register(path, ['PUT'], ...flowArray);
   }
 
-  patch(path, ...middlewareArray) {
-    this.register(path, ['PATCH'], ...middlewareArray);
+  patch(path, ...flowArray) {
+    this.register(path, ['PATCH'], ...flowArray);
   }
 
-  post(path, ...middlewareArray) {
-    this.register(path, ['POST'], ...middlewareArray);
+  post(path, ...flowArray) {
+    this.register(path, ['POST'], ...flowArray);
   }
 
-  delete(path, ...middlewareArray) {
-    this.register(path, ['DELETE'], ...middlewareArray);
+  delete(path, ...flowArray) {
+    this.register(path, ['DELETE'], ...flowArray);
   }
 }
 

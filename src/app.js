@@ -20,12 +20,12 @@ const {
 class Application {
   constructor() {
     this.router = new Router();
-    this.middlewareArray = [];
+    this.decoratorArray = [];
     this.server = null;
   }
 
-  use(...middlewareArray) {
-    this.middlewareArray.push(...middlewareArray);
+  use(decorator) {
+    this.decoratorArray.push(decorator);
   }
 
   listen(...args) {
@@ -60,7 +60,7 @@ class Application {
   _getMiddlewareDecorator() {
     return (func) => {
       const executor = composeDecorator(
-        ...this.middlewareArray,
+        ...this.decoratorArray,
         (context) => this.router.executor(context),
       );
 

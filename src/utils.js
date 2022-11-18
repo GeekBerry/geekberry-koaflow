@@ -9,11 +9,13 @@ const querystring = require('node:querystring');
 // ----------------------------------------------------------------------------
 
 /**
- * @param decoratorArray [function]
+ * > composeDecorator(fa, fb, f)(v) == fa(fb(f))(v)
+ *
+ * @param args {function}
  * @return {function}
 
  * @example
- ```javascript
+ ```
  function inc(func) {
    return (v) => {
      return func(v) + 1;
@@ -26,20 +28,56 @@ const querystring = require('node:querystring');
    };
  }
 
- inc(double(v => v))(5); // => 11
  composeDecorator(inc, double, v => v)(5); // 11
- double(inc(v => v))(5); // => 12
+ inc(double(v => v))(5); // => 11
+
  composeDecorator(double, inc, v => v)(5); // 12
+ double(inc(v => v))(5); // => 12
  ```
  */
-function composeDecorator(...decoratorArray) {
-  decoratorArray.forEach((func, index) => {
-    assert(typeof func === 'function', `args[${index}] not function`);
+function composeDecorator(...args) {
+  args.forEach((func, index) => {
+    assert(typeof func === 'function', `args[${index}] must be function`);
   });
 
-  return decoratorArray
+  return args
     .reverse()
-    .reduce((func, decorate) => decorate(func));
+    .reduce((func, decorator) => decorator(func));
+}
+
+/**
+ * > composeFlow(fa,fb)(v) == fb(fa(v))
+ *
+ * @param args {function}
+ * @return {function}
+ *
+ * @example
+ ```
+ function inc(v) {
+   return v + 1;
+ }
+
+ function double(v) {
+   return v * 1;
+ }
+
+ composeFlow(double, inc)(5) // => 11
+ inc(double(5)) // => 11
+
+ composeFlow(inc, double)(5) // => 12
+ double(inc(5)) // => 12
+ ```
+ */
+function composeFlow(...args) {
+  args.forEach((func, index) => {
+    assert(typeof func === 'function', `args[${index}] must be function`);
+  });
+
+  return args
+    .reverse()
+    .reduce((func, flow) => {
+      return (...args) => func(flow(...args));
+    });
 }
 
 // ----------------------------------------------------------------------------
@@ -76,7 +114,7 @@ function parseQuery(string) {
  { type: 'text/html', parameter: { charset: 'utf-8' } }
  */
 function parseContentType(string = '') {
-  assert(typeof string === 'string', 'content-type not string');
+  assert(typeof string === 'string', 'content-type must be string');
 
   const [type, ...paramArray] = string.split(';');
 
@@ -91,6 +129,7 @@ function parseContentType(string = '') {
 
 module.exports = {
   composeDecorator,
+  composeFlow,
   parseQuery,
   parseContentType,
 };

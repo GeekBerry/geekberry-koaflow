@@ -91,7 +91,7 @@ function sendResponseDecorator(func) {
     try {
       await func(request, response);
 
-      assert(Buffer.isBuffer(response.data), 'response.data not Buffer');
+      assert(Buffer.isBuffer(response.data), 'response.data must be Buffer');
       response.setHeader('content-length', response.data.length);
       response.write(response.data);
     } catch (e) {
